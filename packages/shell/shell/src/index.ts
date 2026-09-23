@@ -34,6 +34,7 @@ export type {
   DshEnvironmentKey,
 } from './types.ts'
 export { parseExitStatus } from './render.ts'
+export { win32NvmShimDirectory, pathWithNvmShimPrepend } from './nvm-shim.ts'
 export type { ParsedExitStatus } from './render.ts'
 
 declare module '@deepseek-ai/cordis' {

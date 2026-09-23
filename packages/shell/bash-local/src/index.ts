@@ -11,7 +11,7 @@
 
 import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { SHELL_SETTINGS_NAMESPACE, ShellExecutor } from '@deepseek-ai/dsh-shell'
+import { SHELL_SETTINGS_NAMESPACE, ShellExecutor, pathWithNvmShimPrepend } from '@deepseek-ai/dsh-shell'
 import type { ShellExecRequest, ShellExecSpec, ShellProcess, ShellProcessRead, ShellRunResult, CollectedOutput } from '@deepseek-ai/dsh-shell'
 import type { SubprocessCollect, SubprocessHandle, SubprocessOutputReader, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
 import type {} from '@deepseek-ai/dsh-settings'
@@ -194,8 +194,16 @@ export class LocalBashExecutor extends ShellExecutor {
       signal,
       // One explicit env map for the seam, layered so the trusted dshEnv
       // snapshot beats both the caller's env and the terminal overrides; the
-      // subprocess service merges the whole map after its ambient scrub.
-      env: { ...ENV_OVERRIDES, ...spec.env, ...spec.dshEnv },
+      // subprocess service merges the whole map after its ambient scrub. On
+      // nvm-windows machines the nvm shim junction is put first on PATH so
+      // commands in a directory with a .nvmrc resolve Node through nvm's
+      // auto-detection (a raw install dir injected by npm/pnpm would bypass it).
+      env: {
+        ...ENV_OVERRIDES,
+        ...(process.env.PATH !== undefined ? { PATH: pathWithNvmShimPrepend(process.env.PATH) ?? process.env.PATH } : {}),
+        ...spec.env,
+        ...spec.dshEnv,
+      },
     }
   }
 
